@@ -17,23 +17,22 @@ app.get('/', function(req, res){   res.send('Running!!'); });
 
 app.post('/weather', function(req, res){   
 	
-	//res.send('Your request was sent, please wait ... ');
-
 	var query = req.body.text;
-
-	if(query !== 'RS/Belgrade'){
-		res.send('Invalid request, please use RS/Belgrade');
-		return;
-	}	
 
 	var parsed_url = url.format({     
 		pathname: 'http://api.wunderground.com/api/' + apikey + '/conditions/q/' + req.body.text + format,   
 	});
 	console.log(parsed_url);
 	request(parsed_url, function (error, response, body) {     
+		var d = JSON.parse(body);
+		//console.log(d);
+		if(d.hasOwnProperty('current_observation') === false){ 
+			res.send('No cities match your search query'); 
+			return;
+		}
 		if (!error && response.statusCode == 200) {       
 			var data = JSON.parse(body);       
-			var temperature = data.current_observation.temperature_string;       
+			var temperature = data.current_observation.temp_c;       
 			var weatherCondition = data.current_observation.weather       
 			var icon_url = data.current_observation.icon_url       
 			var location = data.current_observation.display_location.full        
@@ -43,7 +42,7 @@ app.post('/weather', function(req, res){
 						"author_name": "Orange Cloud",
 						"color":"#00BFFF",
 						"title": "" + data.current_observation.observation_time,
-				 		"text": "" + location + ", " + temperature + " *" + weatherCondition + "*, _feels like " + data.current_observation.feelslike_c +"°C_\n"                   
+				 		"text": "" + location + ", *" + temperature + "°C " + weatherCondition + "*, _feels like " + data.current_observation.feelslike_c +"°C_\n"                   
 						+ "Wind: " + data.current_observation.wind_string,             
 						"image_url": icon_url + "\n",           
 						"footer": "<https://github.com/m4r35>",
